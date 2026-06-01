@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from "react"
 import {
-  ArrowLeft, Building2, Users, Package, Calendar, Edit2,
+  ArrowLeft, Building2, Users, Package, Edit2,
   Save, X, Trash2, Hash, Tag, ChevronRight, Mail
 } from "lucide-react"
-import { Badge } from "@/components/ui/primitives"
+import { Badge, Input, Textarea } from "@/components/ui/primitives"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { departments as deptsApi, type Department, type User, type Equipment } from "@/lib/api"
 import { useApp } from "@/context/AppContext"
+import { useToast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
 type Tab = "users" | "equipment"
@@ -19,6 +20,7 @@ function statusBadge(status: Equipment["status"]) {
 
 export default function DepartmentDetailPage({ departmentId }: { departmentId: string }) {
   const { setSelectedDepartmentId, setSelectedUserId, setSelectedEquipmentId, setCurrentPage, isAdmin } = useApp()
+  const { toast } = useToast()
   const [dept, setDept] = useState<(Department & { users: User[]; equipment: Equipment[] }) | null>(null)
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
@@ -53,8 +55,10 @@ export default function DepartmentDetailPage({ departmentId }: { departmentId: s
       await deptsApi.update(dept.id, { name: form.name, code: form.code.toUpperCase(), description: form.description || undefined })
       setEditing(false)
       load()
+      toast("Department updated", "success")
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to save")
+      toast(e instanceof Error ? e.message : "Failed to update department", "error")
     } finally {
       setSaving(false)
     }
@@ -65,8 +69,10 @@ export default function DepartmentDetailPage({ departmentId }: { departmentId: s
     try {
       await deptsApi.delete(dept.id)
       setSelectedDepartmentId(null)
+      toast("Department deleted", "success")
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to delete")
+      toast(e instanceof Error ? e.message : "Failed to delete department", "error")
     }
   }
 
@@ -106,17 +112,16 @@ export default function DepartmentDetailPage({ departmentId }: { departmentId: s
           </div>
           <div>
             {editing ? (
-              <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="text-2xl font-semibold bg-transparent border-b-2 border-primary focus:outline-none" />
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                className="text-2xl font-semibold border-b-2 border-primary rounded-none px-0" />
             ) : (
               <h1 className="text-2xl font-semibold">{dept.name}</h1>
             )}
             {editing ? (
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-sm text-muted-foreground">Code:</span>
-                <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-                  maxLength={6}
-                  className="text-sm font-mono bg-transparent border-b border-primary focus:outline-none w-20" />
+                <Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                  maxLength={6} className="font-mono w-24 inline-flex" />
               </div>
             ) : (
               <p className="text-muted-foreground font-mono text-sm">{dept.code}</p>
@@ -143,9 +148,8 @@ export default function DepartmentDetailPage({ departmentId }: { departmentId: s
 
       {/* Description */}
       {editing ? (
-        <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-          rows={2} placeholder="Department description…"
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+        <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+          rows={2} placeholder="Department description…" />
       ) : dept.description ? (
         <p className="text-muted-foreground">{dept.description}</p>
       ) : null}

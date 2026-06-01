@@ -1,5 +1,6 @@
 import type { ReactElement } from "react"
 import { AppProvider, useApp } from "@/context/AppContext"
+import { ToastProvider } from "@/components/ui/toast"
 import Sidebar from "@/components/Sidebar"
 import LoginPage from "@/pages/Login"
 import Dashboard from "@/pages/Dashboard"
@@ -14,6 +15,8 @@ import DepartmentsPage from "@/pages/Departments"
 import DepartmentDetailPage from "@/pages/DepartmentDetail"
 import MyEquipmentPage from "@/pages/MyEquipment"
 import MyHandoversPage from "@/pages/MyHandovers"
+import ProfilePage from "@/pages/Profile"
+import ActivityLogPage from "@/pages/ActivityLog"
 
 function AppContent() {
   const {
@@ -58,20 +61,26 @@ function AppContent() {
     </div>
   )
 
-  // RBAC: non-admin pages
+  const sharedPages: Record<string, ReactElement> = {
+    profile: <ProfilePage />,
+  }
+
   const staffPages: Record<string, ReactElement> = {
+    ...sharedPages,
     dashboard: <Dashboard />,
     my_equipment: <MyEquipmentPage />,
     my_handovers: <MyHandoversPage />,
   }
 
   const adminPages: Record<string, ReactElement> = {
+    ...sharedPages,
     dashboard: <Dashboard />,
     equipment: <EquipmentPage />,
     handovers: <HandoversPage />,
     users: <UsersPage />,
     reports: <ReportsPage />,
     departments: <DepartmentsPage />,
+    activity: <ActivityLogPage />,
   }
 
   const pages = isAdmin ? adminPages : staffPages
@@ -89,7 +98,9 @@ function AppContent() {
 export default function App() {
   return (
     <AppProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AppProvider>
   )
 }

@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Package, Mail, ArrowLeft, CheckCircle } from "lucide-react"
+import { Input, Label } from "@/components/ui/primitives"
 import { Button } from "@/components/ui/button"
 import { useApp } from "@/context/AppContext"
 import { auth as authApi } from "@/lib/api"
@@ -35,7 +36,7 @@ export default function LoginPage() {
     try {
       await authApi.forgotPassword(resetEmail)
       setView("sent")
-    } catch (err: unknown) {
+    } catch {
       // Still show sent to prevent email enumeration
       setView("sent")
     } finally {
@@ -63,32 +64,20 @@ export default function LoginPage() {
               <p className="text-sm text-muted-foreground mb-5">Enter your credentials to continue</p>
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Email</label>
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    required
-                    className="flex w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
+                  <Label>Email</Label>
+                  <Input type="email" placeholder="you@example.com" value={email}
+                    onChange={e => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium">Password</label>
+                    <Label>Password</Label>
                     <button type="button" onClick={() => { setView("forgot"); setError("") }}
                       className="text-xs text-primary hover:underline">
                       Forgot password?
                     </button>
                   </div>
-                  <input
-                    type="password"
-                    placeholder="••••••"
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    required
-                    className="flex w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
+                  <Input type="password" placeholder="••••••" value={password}
+                    onChange={e => setPassword(e.target.value)} required />
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -113,15 +102,9 @@ export default function LoginPage() {
               </p>
               <form onSubmit={handleForgot} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium">Email address</label>
-                  <input
-                    type="email"
-                    placeholder="you@example.com"
-                    value={resetEmail}
-                    onChange={e => setResetEmail(e.target.value)}
-                    required
-                    className="flex w-full h-9 rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
+                  <Label>Email address</Label>
+                  <Input type="email" placeholder="you@example.com" value={resetEmail}
+                    onChange={e => setResetEmail(e.target.value)} required />
                 </div>
                 {error && <p className="text-sm text-destructive">{error}</p>}
                 <Button type="submit" className="w-full" disabled={loading}>

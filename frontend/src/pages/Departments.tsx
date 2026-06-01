@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react"
 import { Plus, Search, Building2, Users, Package, Calendar, LayoutGrid, List, ChevronRight } from "lucide-react"
-import { Card, CardContent, Label } from "@/components/ui/primitives"
+import { Card, CardContent, Label, Input, Textarea } from "@/components/ui/primitives"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { departments as deptsApi, type Department } from "@/lib/api"
 import { useApp } from "@/context/AppContext"
+import { useToast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
 const DEPT_COLORS = [
@@ -23,6 +24,7 @@ function deptColor(index: number) {
 
 export default function DepartmentsPage() {
   const { setSelectedDepartmentId, setCurrentPage } = useApp()
+  const { toast } = useToast()
   const [depts, setDepts] = useState<Department[]>([])
   const [search, setSearch] = useState("")
   const [view, setView] = useState<"grid" | "list">("grid")
@@ -66,8 +68,10 @@ export default function DepartmentsPage() {
       setShowAdd(false)
       setForm({ name: "", code: "", description: "" })
       load()
+      toast("Department added successfully", "success")
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to add department")
+      toast(e instanceof Error ? e.message : "Failed to add department", "error")
     } finally {
       setSaving(false)
     }
@@ -225,23 +229,18 @@ export default function DepartmentsPage() {
           <div className="space-y-3 py-2">
             <div className="space-y-1.5">
               <Label>Department Name *</Label>
-              <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Information Technology"
-                className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Information Technology" />
             </div>
             <div className="space-y-1.5">
               <Label>Code *</Label>
-              <input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
-                placeholder="e.g. ICT"
-                maxLength={6}
-                className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring" />
+              <Input value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                placeholder="e.g. ICT" maxLength={6} className="font-mono" />
             </div>
             <div className="space-y-1.5">
               <Label>Description</Label>
-              <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Brief description of the department"
-                rows={2}
-                className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+              <Textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Brief description of the department" rows={2} />
             </div>
           </div>
           <DialogFooter>

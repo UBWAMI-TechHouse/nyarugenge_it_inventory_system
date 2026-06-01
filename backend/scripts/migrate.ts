@@ -116,6 +116,38 @@ BEGIN
 END;
 $$;
 
+-- ─── Maintenance Logs ──────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS maintenance_logs (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  equipment_id  UUID        NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+  type          VARCHAR(20)  NOT NULL DEFAULT 'repair'
+                CHECK (type IN ('repair','inspection','calibration','cleaning','upgrade','other')),
+  description   TEXT        NOT NULL,
+  cost          NUMERIC(10,2),
+  date          DATE        NOT NULL DEFAULT CURRENT_DATE,
+  logged_by     UUID        REFERENCES users(id) ON DELETE SET NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_maintenance_logs_equipment_id ON maintenance_logs(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_logs_date         ON maintenance_logs(date DESC);
+
+-- ─── Activity Events (audit log) ───────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS activity_events (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID        REFERENCES users(id) ON DELETE SET NULL,
+  action      VARCHAR(50)  NOT NULL,
+  entity_type VARCHAR(50)  NOT NULL,
+  entity_id   UUID,
+  description TEXT        NOT NULL,
+  metadata    JSONB,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_activity_events_created_at ON activity_events(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_events_entity     ON activity_events(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_activity_events_user_id    ON activity_events(user_id);
+
 -- ─── Add notes column to equipment if not exists (safe migration) ─────────────
 DO $$
 BEGIN

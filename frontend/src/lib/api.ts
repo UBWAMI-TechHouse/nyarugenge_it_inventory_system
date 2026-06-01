@@ -304,6 +304,60 @@ export const handovers = {
     request<ApiResponse<Handover>>(`/handovers/${id}/cancel`, { method: "PATCH" }),
 }
 
+// ─── Maintenance Logs ──────────────────────────────────────────────────────────
+
+export interface MaintenanceLog {
+  id: string
+  equipment_id: string
+  type: "repair" | "inspection" | "calibration" | "cleaning" | "upgrade" | "other"
+  description: string
+  cost?: number
+  date: string
+  logged_by?: string
+  logged_by_name?: string
+  created_at: string
+}
+
+export const maintenance = {
+  list: (equipmentId: string) =>
+    request<ApiResponse<MaintenanceLog[]>>(`/maintenance/${equipmentId}`),
+
+  create: (body: {
+    equipment_id: string
+    type: string
+    description: string
+    cost?: number
+    date?: string
+  }) =>
+    request<ApiResponse<MaintenanceLog>>("/maintenance", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+}
+
+// ─── Activity Events ───────────────────────────────────────────────────────────
+
+export interface ActivityEvent {
+  id: string
+  user_id?: string
+  user_name?: string
+  action: string
+  entity_type: string
+  entity_id?: string
+  description: string
+  metadata?: Record<string, unknown>
+  created_at: string
+}
+
+export const activities = {
+  list: (params?: { page?: number; limit?: number }) => {
+    const q = new URLSearchParams()
+    if (params?.page) q.set("page", String(params.page))
+    if (params?.limit) q.set("limit", String(params.limit))
+    return request<ApiResponse<ActivityEvent[]> & { total: number; totalPages: number }>(`/activities?${q}`)
+  },
+}
+
 // ─── Reports ──────────────────────────────────────────────────────────────────
 
 export const reports = {

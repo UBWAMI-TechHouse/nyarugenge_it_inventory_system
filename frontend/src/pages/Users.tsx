@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react"
 import { Plus, Search, ChevronRight, LayoutGrid, List, Building2 } from "lucide-react"
-import { Card, CardContent, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives"
+import { Card, CardContent, Label, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { users as usersApi, departments as deptsApi, type User, type Department } from "@/lib/api"
 import { useApp } from "@/context/AppContext"
+import { useToast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
 // Match the roles actually used in the seed / backend
@@ -12,6 +13,7 @@ const ROLES = ["Staff", "Manager", "Analyst", "Technician", "Administrator"]
 
 export default function UsersPage() {
   const { setSelectedUserId } = useApp()
+  const { toast } = useToast()
   const [items, setItems] = useState<User[]>([])
   const [depts, setDepts] = useState<Department[]>([])
   const [search, setSearch] = useState("")
@@ -62,8 +64,10 @@ export default function UsersPage() {
       setShowAdd(false)
       setForm({ name: "", email: "", department_id: "__none__", role: "Staff", password: "" })
       load()
+      toast("User added successfully", "success")
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to add user")
+      toast(e instanceof Error ? e.message : "Failed to add user", "error")
     } finally {
       setSaving(false)
     }
@@ -207,10 +211,9 @@ export default function UsersPage() {
             ].map(({ label, key, placeholder, type }) => (
               <div key={key} className="space-y-1.5">
                 <Label>{label}</Label>
-                <input type={type ?? "text"} placeholder={placeholder}
+                <Input type={type ?? "text"} placeholder={placeholder}
                   value={(form as Record<string, string>)[key]}
-                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                  className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                  onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))} />
               </div>
             ))}
             <div className="space-y-1.5">

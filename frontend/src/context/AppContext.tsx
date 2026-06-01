@@ -36,6 +36,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(null)
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!getToken()) { setIsAuthLoading(false); return }
     authApi.me()
       .then(res => { if (res.data) setUser(res.data) })

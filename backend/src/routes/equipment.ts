@@ -3,8 +3,9 @@ import { body, query as vQuery } from "express-validator";
 import { v4 as uuidv4 } from "uuid";
 import { query } from "../db/pool";
 import { validate } from "../middleware/validate";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth, type AuthRequest } from "../middleware/auth";
 import { AppError } from "../middleware/errorHandler";
+import { logActivity } from "../lib/activity";
 import { uuidParam, uuidBodyOptional } from "../middleware/uuidParam";
 import type { Equipment } from "../types";
 
@@ -185,6 +186,12 @@ router.post(
          RETURNING *`,
         [id, name, category, serial_number, tag_number, assigned_to ?? null, status, condition, purchase_date, notes ?? null]
       );
+      const user2 = (req as AuthRequest).user;
+      await logActivity({
+        userId: user2?.id, action: "created", entityType: "equipment",
+        entityId: id, description: `Created equipment: ${name}`,
+        metadata: { category, status, condition },
+      });
       res.status(201).json({ success: true, data: result.rows[0] });
     } catch (err) {
       next(err);
@@ -231,6 +238,11 @@ router.patch(
         values
       );
       if (!result.rows.length) throw new AppError(404, "Equipment not found");
+      const user3 = (req as AuthRequest).user;
+      await logActivity({
+        userId: user3?.id, action: "updated", entityType: "equipment",
+        entityId: req.params.id, description: `Updated equipment fields: ${fields.join(", ")}`,
+      });
       res.json({ success: true, data: result.rows[0] });
     } catch (err) {
       next(err);
@@ -251,6 +263,11 @@ router.delete(
         [req.params.id]
       );
       if (!result.rows.length) throw new AppError(404, "Equipment not found");
+      const user4 = (req as AuthRequest).user;
+      await logActivity({
+        userId: user4?.id, action: "deleted", entityType: "equipment",
+        entityId: req.params.id, description: `Deleted equipment: ${req.params.id}`,
+      });
       res.json({ success: true, message: "Equipment deleted" });
     } catch (err) {
       next(err);

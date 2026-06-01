@@ -14,6 +14,8 @@ import userRoutes from "./routes/users";
 import equipmentRoutes from "./routes/equipment";
 import handoverRoutes from "./routes/handovers";
 import reportRoutes from "./routes/reports";
+import maintenanceRoutes from "./routes/maintenance";
+import activityRoutes from "./routes/activities";
 
 const app = express();
 
@@ -75,6 +77,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/equipment", equipmentRoutes);
 app.use("/api/handovers", handoverRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/maintenance", maintenanceRoutes);
+app.use("/api/activities", activityRoutes);
 
 // ─── Error handling ───────────────────────────────────────────────────────────
 app.use(notFound);

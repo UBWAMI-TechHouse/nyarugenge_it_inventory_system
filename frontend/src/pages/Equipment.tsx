@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react"
-import { Plus, Search, Package, Tag, Hash, LayoutGrid, List, ChevronRight } from "lucide-react"
+import { Plus, Search, Package, Tag, Hash, LayoutGrid, List, ChevronRight, Download } from "lucide-react"
 import { Card, CardContent, Badge, Input, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { equipment as equipmentApi, users as usersApi, type Equipment, type User } from "@/lib/api"
 import { useApp } from "@/context/AppContext"
+import { useToast } from "@/components/ui/toast"
 import { cn } from "@/lib/utils"
 
 const CATEGORIES = ["Laptop", "Desktop", "Monitor", "Printer", "Phone", "Peripheral", "Server", "Networking", "Other"]
@@ -38,6 +39,7 @@ const emptyForm: FormState = {
 
 export default function EquipmentPage() {
   const { setSelectedEquipmentId, setCurrentPage } = useApp()
+  const { toast } = useToast()
   const [items, setItems] = useState<Equipment[]>([])
   const [userList, setUserList] = useState<User[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -50,6 +52,7 @@ export default function EquipmentPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
+  const [exporting, setExporting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -96,10 +99,35 @@ export default function EquipmentPage() {
         assigned_to: form.assigned_to || null,
       })
       setShowAdd(false); setForm(emptyForm); load()
+      toast("Equipment added successfully", "success")
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to add")
+      toast(e instanceof Error ? e.message : "Failed to add equipment", "error")
     } finally {
       setSaving(false)
+    }
+  }
+
+  function exportCSV() {
+    setExporting(true)
+    try {
+      const headers = ["Name", "Category", "Serial Number", "Tag Number", "Status", "Condition", "Purchase Date", "Assigned To"]
+      const rows = filtered.map(e => [
+        e.name, e.category, e.serial_number, e.tag_number,
+        e.status, e.condition, e.purchase_date?.slice(0, 10) ?? "",
+        e.assigned_user_name ?? ""
+      ].map(v => `"${v.replace(/"/g, '""')}"`).join(","))
+      const csv = [headers.join(","), ...rows].join("\n")
+      const blob = new Blob([csv], { type: "text/csv" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url; a.download = `equipment_export_${new Date().toISOString().slice(0, 10)}.csv`
+      a.click(); URL.revokeObjectURL(url)
+      toast(`Exported ${rows.length} equipment records`, "success")
+    } catch {
+      toast("Failed to export CSV", "error")
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -113,9 +141,14 @@ export default function EquipmentPage() {
           <h1 className="text-2xl font-semibold text-foreground">Equipment</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{filtered.length} total items tracked</p>
         </div>
-        <Button onClick={() => setShowAdd(true)}>
-          <Plus className="w-4 h-4 mr-1.5" />Add Equipment
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV} disabled={exporting || filtered.length === 0}>
+            <Download className="w-4 h-4 mr-1.5" />{exporting ? "Exporting…" : "Export CSV"}
+          </Button>
+          <Button onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4 mr-1.5" />Add Equipment
+          </Button>
+        </div>
       </div>
 
       {error && <div className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-lg">{error}</div>}
@@ -257,9 +290,8 @@ export default function EquipmentPage() {
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">
               <Label>Name *</Label>
-              <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. MacBook Pro 14"
-                className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. MacBook Pro 14" />
             </div>
             <div className="space-y-1.5">
               <Label>Category</Label>
@@ -277,15 +309,13 @@ export default function EquipmentPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Serial Number *</Label>
-              <input value={form.serial_number} onChange={e => setForm(f => ({ ...f, serial_number: e.target.value }))}
-                placeholder="SN-XXX-001"
-                className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <Input value={form.serial_number} onChange={e => setForm(f => ({ ...f, serial_number: e.target.value }))}
+                placeholder="SN-XXX-001" />
             </div>
             <div className="space-y-1.5">
               <Label>Tag Number *</Label>
-              <input value={form.tag_number} onChange={e => setForm(f => ({ ...f, tag_number: e.target.value }))}
-                placeholder="TAG-001"
-                className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <Input value={form.tag_number} onChange={e => setForm(f => ({ ...f, tag_number: e.target.value }))}
+                placeholder="TAG-001" />
             </div>
             <div className="space-y-1.5">
               <Label>Condition</Label>
@@ -296,8 +326,7 @@ export default function EquipmentPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Purchase Date *</Label>
-              <input type="date" value={form.purchase_date} onChange={e => setForm(f => ({ ...f, purchase_date: e.target.value }))}
-                className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+              <Input type="date" value={form.purchase_date} onChange={e => setForm(f => ({ ...f, purchase_date: e.target.value }))} />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label>Assign To (optional)</Label>

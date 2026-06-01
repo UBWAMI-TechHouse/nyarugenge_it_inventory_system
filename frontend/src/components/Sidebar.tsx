@@ -1,11 +1,12 @@
 import { useState } from "react"
 import {
   LayoutDashboard, Package, ArrowLeftRight, Users, BarChart3,
-  LogOut, Sun, Moon, Building2, Menu, X, Laptop, History
+  LogOut, Sun, Moon, Building2, Menu, X, Laptop, History, Activity
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useApp } from "@/context/AppContext"
 import { Button } from "@/components/ui/button"
+import GlobalSearch from "@/components/GlobalSearch"
 
 const adminNavItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -14,6 +15,7 @@ const adminNavItems = [
   { id: "users", label: "Users", icon: Users },
   { id: "departments", label: "Departments", icon: Building2 },
   { id: "reports", label: "Reports", icon: BarChart3 },
+  { id: "activity", label: "Activity Log", icon: Activity },
 ]
 
 const staffNavItems = [
@@ -54,8 +56,11 @@ export default function Sidebar() {
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
+        <div className="mb-3">
+          <GlobalSearch />
+        </div>
         {user && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary/8 border border-primary/15">
+          <button onClick={() => navigate("profile")} className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md bg-primary/8 border border-primary/15 hover:bg-primary/12 transition-colors text-left">
             <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center text-[9px] font-bold text-primary-foreground">
               {user.name.charAt(0)}
             </div>
@@ -66,7 +71,7 @@ export default function Sidebar() {
             {isAdmin && (
               <span className="text-[9px] font-semibold bg-primary/20 text-primary px-1.5 py-0.5 rounded">ADMIN</span>
             )}
-          </div>
+          </button>
         )}
       </div>
 

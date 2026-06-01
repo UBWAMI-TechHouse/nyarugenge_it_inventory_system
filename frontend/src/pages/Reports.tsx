@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, AreaChart, Area
+  PieChart, Pie, Cell, Legend, AreaChart, Area, type PieLabelRenderProps
 } from "recharts"
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives"
+import { Label, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives"
 import { reports as reportsApi, users as usersApi, departments as deptsApi } from "@/lib/api"
-import { Download, TrendingUp, Package, Users, ArrowLeftRight, Filter, X, Printer } from "lucide-react"
+import { Download, TrendingUp, Package, Users, ArrowLeftRight, Filter, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
@@ -317,7 +317,7 @@ export default function ReportsPage() {
                   <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
                       <Pie data={eqReport.byCondition} cx="50%" cy="50%" outerRadius={90}
-                        dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        dataKey="value" nameKey="name" label={({ name, percent }: PieLabelRenderProps) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`}
                         labelLine={false}>
                         {eqReport.byCondition.map((entry, i) => (
                           <Cell key={i} fill={CONDITION_COLORS[entry.name] ?? COLORS[i]} />
@@ -376,7 +376,7 @@ export default function ReportsPage() {
                     <PieChart>
                       <Pie data={hvReport.byActivity} cx="50%" cy="50%" outerRadius={80}
                         dataKey="count" nameKey="activity_type"
-                        label={({ activity_type, percent }) => `${activity_type} ${(percent * 100).toFixed(0)}%`}
+                        label={({ name, percent }: PieLabelRenderProps) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`}
                         labelLine={false}>
                         {hvReport.byActivity.map((entry, i) => (
                           <Cell key={i} fill={ACTIVITY_COLORS[entry.activity_type] ?? COLORS[i]} />

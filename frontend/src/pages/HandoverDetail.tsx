@@ -6,7 +6,7 @@ import { useApp } from "@/context/AppContext"
 import { handovers as handoversApi, type HandoverActivityType, type Handover } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
-type HandoverDetail = Awaited<ReturnType<typeof handoversApi.get>>["data"] & {}
+type HandoverDetail = Awaited<ReturnType<typeof handoversApi.get>>["data"]
 
 const ACTIVITY_CONFIGS: Record<HandoverActivityType, { label: string; icon: React.ComponentType<{className?: string}>; color: string; bg: string }> = {
   reassign: { label: "Reassignment", icon: RefreshCw, color: "text-primary", bg: "bg-primary/10 border-primary/20" },
@@ -22,6 +22,7 @@ export default function HandoverDetailPage({ handoverId }: { handoverId: string 
   const [error, setError] = useState("")
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     handoversApi.get(handoverId)
       .then(async res => {
@@ -81,8 +82,8 @@ export default function HandoverDetailPage({ handoverId }: { handoverId: string 
                         </div>
                         <div>
                           <div className="font-semibold text-sm">{detail.from_user_name}</div>
-                          {"from_user_dept" in detail && <div className="text-xs text-muted-foreground">{(detail as any).from_user_dept}</div>}
-                          {"from_user_email" in detail && <div className="text-xs text-muted-foreground">{(detail as any).from_user_email}</div>}
+                          {detail.from_user_dept && <div className="text-xs text-muted-foreground">{detail.from_user_dept}</div>}
+                          {detail.from_user_email && <div className="text-xs text-muted-foreground">{detail.from_user_email}</div>}
                         </div>
                       </div>
                     </div>
@@ -100,8 +101,8 @@ export default function HandoverDetailPage({ handoverId }: { handoverId: string 
                       </div>
                       <div>
                         <div className="font-semibold text-sm">{detail.to_user_name}</div>
-                        {"to_user_dept" in detail && <div className="text-xs text-muted-foreground">{(detail as any).to_user_dept}</div>}
-                        {"to_user_email" in detail && <div className="text-xs text-muted-foreground">{(detail as any).to_user_email}</div>}
+                        {detail.to_user_dept && <div className="text-xs text-muted-foreground">{detail.to_user_dept}</div>}
+                        {detail.to_user_email && <div className="text-xs text-muted-foreground">{detail.to_user_email}</div>}
                       </div>
                     </div>
                   ) : <div className="text-sm text-muted-foreground italic">Logistics / Store</div>}
@@ -119,23 +120,23 @@ export default function HandoverDetailPage({ handoverId }: { handoverId: string 
                     </div>
                     <div>
                       <div className="font-semibold">{detail.equipment_name}</div>
-                      {"equipment_category" in detail && <div className="text-xs text-muted-foreground">{(detail as any).equipment_category}</div>}
+                      {detail.equipment_category && <div className="text-xs text-muted-foreground">{detail.equipment_category}</div>}
                     </div>
-                    {"equipment_condition" in detail && (
-                      <Badge variant="secondary" className="ml-auto capitalize">{(detail as any).equipment_condition}</Badge>
+                    {detail.equipment_condition && (
+                      <Badge variant="secondary" className="ml-auto capitalize">{detail.equipment_condition}</Badge>
                     )}
                   </div>
                   <div className="grid grid-cols-2 gap-2 pt-1">
-                    {"equipment_serial" in detail && (
+                    {detail.equipment_serial && (
                       <div className="p-2.5 rounded-lg bg-card border border-border">
                         <div className="text-[10px] text-muted-foreground flex items-center gap-1 mb-1"><Hash className="w-2.5 h-2.5" />Serial Number</div>
-                        <div className="font-mono text-xs font-medium">{(detail as any).equipment_serial}</div>
+                        <div className="font-mono text-xs font-medium">{detail.equipment_serial}</div>
                       </div>
                     )}
-                    {"equipment_tag_number" in detail && (
+                    {detail.equipment_tag_number && (
                       <div className="p-2.5 rounded-lg bg-card border border-border">
                         <div className="text-[10px] text-muted-foreground flex items-center gap-1 mb-1"><Tag className="w-2.5 h-2.5" />Tag Number</div>
-                        <div className="font-mono text-xs font-medium">{(detail as any).equipment_tag_number}</div>
+                        <div className="font-mono text-xs font-medium">{detail.equipment_tag_number}</div>
                       </div>
                     )}
                   </div>

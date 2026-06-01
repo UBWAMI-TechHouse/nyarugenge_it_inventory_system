@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react"
 import {
   Search, Plus, ChevronRight, X, RotateCcw, UserPlus, RefreshCw,
-  Calendar, SortAsc, SortDesc, Filter, ArrowLeftRight
+  SortAsc, SortDesc, Filter, ArrowLeftRight
 } from "lucide-react"
-import { Card, CardContent, Label, Separator } from "@/components/ui/primitives"
+import { Label, Input, Textarea } from "@/components/ui/primitives"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/primitives"
 import { useApp } from "@/context/AppContext"
+import { useToast } from "@/components/ui/toast"
 import {
   handovers as handoversApi, users as usersApi, equipment as equipmentApi,
   type Handover, type User, type Equipment, type HandoverActivityType
@@ -97,6 +98,7 @@ function UserDropdown({ users, value, onChange, placeholder, label, exclude = []
 
 export default function HandoversPage() {
   const { setSelectedHandoverId, user, isAdmin } = useApp()
+  const { toast } = useToast()
   const [items, setItems] = useState<Handover[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([])
@@ -158,9 +160,14 @@ export default function HandoversPage() {
     })
 
     list = [...list].sort((a, b) => {
-      let av = sortField === "date" ? new Date(a.date).getTime() : a[sortField as keyof Handover] as number
-      let bv = sortField === "date" ? new Date(b.date).getTime() : b[sortField as keyof Handover] as number
-      return sortDir === "asc" ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1)
+      if (sortField === "date") {
+        const av = new Date(a.date).getTime()
+        const bv = new Date(b.date).getTime()
+        return sortDir === "asc" ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1)
+      }
+      const av = String(a[sortField as keyof Handover] ?? "")
+      const bv = String(b[sortField as keyof Handover] ?? "")
+      return sortDir === "asc" ? av.localeCompare(bv) : bv.localeCompare(av)
     })
 
     return list
@@ -196,8 +203,10 @@ export default function HandoversPage() {
       setFormDate(new Date().toISOString().slice(0, 10))
       setActType("reassign")
       load()
+      toast("Handover created successfully", "success")
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to create handover")
+      toast(e instanceof Error ? e.message : "Failed to create handover", "error")
     } finally {
       setSaving(false)
     }
@@ -421,34 +430,34 @@ export default function HandoversPage() {
 
               {/* EQUIPMENT — filtered by the relevant user, shows serial + tag */}
               {(() => {
+                const isNewIssue = actType === "new_issue"
                 // For Reassign/Return: filter by fromUser's assigned equipment
                 // For New Issue: show all available equipment
-                const relevantUserId = actType === "new_issue" ? null : formFrom
+                const relevantUserId = isNewIssue ? null : formFrom
                 const filteredEquip = relevantUserId
                   ? equipmentList.filter(e => e.assigned_to === relevantUserId)
-                  : actType === "new_issue"
+                  : isNewIssue
                     ? equipmentList.filter(e => e.status === "available")
                     : equipmentList
-                const noUserSelected = actType !== "new_issue" && !formFrom
+                const noUserSelected = !isNewIssue && !formFrom
                 return (
                   <div className="space-y-1.5">
                     <Label>
                       Equipment *
-                      {relevantUserId && filteredEquip.length === 0 && (
-                        <span className="ml-2 text-xs font-normal text-amber-600">(no equipment assigned to this user)</span>
-                      )}
-                      {actType === "new_issue" && filteredEquip.length === 0 && (
-                        <span className="ml-2 text-xs font-normal text-amber-600">(no available equipment)</span>
+                      {filteredEquip.length === 0 && (
+                        <span className="ml-2 text-xs font-normal text-amber-600">
+                          {isNewIssue ? "no available equipment" : "no equipment assigned to this user"}
+                        </span>
                       )}
                     </Label>
-                    <Select value={formEquip} onValueChange={setFormEquip} disabled={noUserSelected && actType !== "new_issue"}>
+                    <Select value={formEquip} onValueChange={setFormEquip} disabled={noUserSelected}>
                       <SelectTrigger className={cn(noUserSelected && "opacity-60")}>
                         <SelectValue placeholder={noUserSelected ? "Select From User first" : "Select equipment"} />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredEquip.length === 0 ? (
                           <div className="px-3 py-4 text-sm text-center text-muted-foreground">
-                            {actType === "new_issue" ? "No available equipment" : "No equipment for this user"}
+                            {isNewIssue ? "No available equipment" : "No equipment for this user"}
                           </div>
                         ) : (
                           filteredEquip.map(e => (
@@ -477,15 +486,13 @@ export default function HandoversPage() {
 
               <div className="space-y-1.5">
                 <Label>Date</Label>
-                <input type="date" value={formDate} onChange={e => setFormDate(e.target.value)}
-                  className="flex w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                <Input type="date" value={formDate} onChange={e => setFormDate(e.target.value)} />
               </div>
 
               <div className="space-y-1.5">
                 <Label>Notes (optional)</Label>
-                <textarea value={formNotes} onChange={e => setFormNotes(e.target.value)}
-                  rows={2} placeholder="Additional notes…"
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                <Textarea value={formNotes} onChange={e => setFormNotes(e.target.value)}
+                  rows={2} placeholder="Additional notes…" />
               </div>
             </div>
             <div className="flex justify-end gap-2">
